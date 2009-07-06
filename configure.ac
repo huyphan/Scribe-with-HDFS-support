@@ -47,6 +47,9 @@ FB_ENABLE_DEFAULT_STATIC
 # Example: Macro supplies -DFACEBOOK at compile time and "if FACEBOOK endif" capabilities.
 FB_ENABLE_FEATURE([FACEBOOK], [facebook])
 
+FB_ENABLE_FEATURE([USE_SCRIBE_HDFS_SYNC], [hdfs-sync])
+
+
 # Personalized path generator Sets default paths. Provides --with-xx=DIR options.
 # FB_WITH_PATH([<var>_home], [<var>path], [<default location>]
 
