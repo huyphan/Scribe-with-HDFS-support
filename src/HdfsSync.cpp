@@ -99,8 +99,9 @@ bool HdfsSync::openInternal(bool incrementFilename, struct tm* current_time) {
       if (writeMeta) {
         writeFile->write(meta_logfile_prefix + file);
       }
-      
-      sync = true;
+
+      if(writeFile->fileSize())
+        sync = true;
       
       fullFilename = writeFile->getFileName();
       baseFilename = fullFilename;
@@ -154,7 +155,7 @@ bool HdfsSync::openInternal(bool incrementFilename, struct tm* current_time) {
           }
           else
           {
-              string writePath = hdfsPath + "/" + baseFilename;              
+              string writePath = hdfsPath + "/" + categoryHandled.c_str() + "/" + baseFilename;              
               hdfsFile dstFile = hdfsOpenFile(fs, writePath.c_str(), O_WRONLY, 0, 0, 0);
               if (NULL == dstFile)
               {
