@@ -24,6 +24,7 @@
 
 #include "common.h"
 #include "scribe_server.h"
+#include "HdfsSync.h"
 
 using namespace std;
 using namespace boost;
@@ -50,6 +51,7 @@ const string meta_logfile_prefix = "scribe_meta<new_logfile>: ";
 boost::shared_ptr<Store> 
 Store::createStore(const string& type, const string& category, 
                    bool readable, bool multi_category) {
+                   
   if (0 == type.compare("file")) {
     return shared_ptr<Store>(new FileStore(category, multi_category, readable));
   } else if (0 == type.compare("buffer")) {
@@ -70,6 +72,8 @@ Store::createStore(const string& type, const string& category,
     return shared_ptr<Store>(new MultiFileStore(category, multi_category));
   } else if (0 == type.compare("thriftmultifile")) {
     return shared_ptr<Store>(new ThriftMultiFileStore(category, multi_category));
+  } else if (0 == type.compare("hdfssync")) {
+    return shared_ptr<Store>(new HdfsSync(category, multi_category, readable));
   } else {
     return shared_ptr<Store>();
   }
@@ -426,7 +430,7 @@ void FileStore::configure(pStoreConf configuration) {
       writeCategory = true;
     }
   }
-
+  
   unsigned long inttemp = 0;
   configuration->getUnsigned("add_newlines", inttemp);
   addNewlines = inttemp ? true : false;
@@ -477,7 +481,6 @@ bool FileStore::openInternal(bool incrementFilename, struct tm* current_time) {
     }
     
     success = writeFile->openWrite();
-
 
     if (!success) {
       LOG_OPER("[%s] Failed to open file <%s> for writing", categoryHandled.c_str(), file.c_str());
