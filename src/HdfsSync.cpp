@@ -15,7 +15,7 @@ time_t HdfsSync::lastSyncTime;
 HdfsSync::HdfsSync(const string& category, bool multi_category,
                      bool is_buffer_file)
   : FileStore(category,multi_category,is_buffer_file),
-  hdfsHost(""),hdfsPort(0),hdfsPath("/")
+  hdfsHost(""),hdfsPort(0),hdfsPath("/"),hdfs_base_filename("")
 {
 
 }
@@ -42,7 +42,10 @@ void HdfsSync::configure(pStoreConf configuration) {
   configuration->getUnsigned("period_length", periodLength);  
  
   configuration->getString("hdfs_dir", hdfsDir);  
-  
+  if(configuration->getString("hdfs_base_filename", hdfs_base_filename)) {
+    hdfs_base_filename.append("_");
+  }
+   
   // Parse HDFS information
   char* hostport = (char *)malloc(hdfsDir.length()+1);
   char* buf;
@@ -155,7 +158,7 @@ bool HdfsSync::openInternal(bool incrementFilename, struct tm* current_time) {
           }
           else
           {
-              string writePath = hdfsPath + "/" + categoryHandled.c_str() + "/" + baseFilename;              
+              string writePath = hdfsPath + "/" + categoryHandled.c_str() + "/" + hdfs_base_filename.c_str() + baseFilename;              
               hdfsFile dstFile = hdfsOpenFile(fs, writePath.c_str(), O_WRONLY, 0, 0, 0);
               if (NULL == dstFile)
               {
@@ -220,6 +223,7 @@ boost::shared_ptr<Store> HdfsSync::copy(const std::string &category) {
   store->hdfsHost = hdfsHost;
   store->hdfsPort = hdfsPort;
   store->hdfsPath = hdfsPath;
+  store->hdfs_base_filename = hdfs_base_filename;
   store->copyCommon(this);
   return copied;
 }
