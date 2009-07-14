@@ -33,7 +33,8 @@ class FileInterface {
                                                               const std::string& name, 
                                                               bool framed = false);
   static std::vector<std::string> list(const std::string& path, const std::string& fsType);
-
+  std::string getFileName() { return filename; } ;
+  
   virtual bool openRead() = 0;
   virtual bool openWrite() = 0;
   virtual bool openTruncate() = 0;
