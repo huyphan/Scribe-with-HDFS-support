@@ -40,6 +40,10 @@ if FACEBOOK
   FB_SOURCES = gen-cpp/ServiceManager_types.cpp gen-cpp/ServiceManager.cpp
   FB_CPPFLAGS = -I$(fb_home)
 endif
+if USE_SCRIBE_HDFS_SYNC
+  HDFS_SOURCES = HdfsSync.cpp
+  HDFS_LIB = -ljvm -lhdfs
+endif
 if DEBUG
    DEBUG_CPPFLAGS = -DDEBUG_TIMING
 endif
@@ -48,6 +52,8 @@ endif
 # Set libraries external to this component.
 EXTERNAL_LIBS = -L$(thrift_home)/lib -L$(fb303_home)/lib -lfb303  -lthrift -lthriftnb
 EXTERNAL_LIBS += -levent -lpthread
+EXTERNAL_LIBS += -L$(hadoop_home)/lib -L$(jvm_lib) 
+EXTERNAL_LIBS += $(HDFS_LIB)
 
 # Section 2 ############################################################################
 # Set common flags recognized by automake.
@@ -61,7 +67,7 @@ AM_CPPFLAGS += -I$(fb303_home)/include/thrift
 AM_CPPFLAGS += -I$(fb303_home)/include/thrift/fb303
 AM_CPPFLAGS += $(BOOST_CPPFLAGS)
 AM_CPPFLAGS += $(FB_CPPFLAGS) $(DEBUG_CPPFLAGS)
-
+AM_CPPFLAGS += -I$(jdk_home)/include -I$(jdk_home)/include/linux
 AM_LDFLAGS = $(BOOST_LDFLAGS) $(BOOST_SYSTEM_LIB) $(BOOST_FILESYSTEM_LIB)
 
 # Section 3 #############################################################################

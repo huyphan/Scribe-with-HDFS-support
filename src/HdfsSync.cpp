@@ -113,6 +113,7 @@ bool HdfsSync::openInternal(bool incrementFilename, struct tm* current_time) {
       writeFile->close();
     }
 
+    
     writeFile = FileInterface::createFileInterface(fsType, file, isBufferFile);
     if (!writeFile) {
       LOG_OPER("[%s] Failed to create file <%s> of type <%s> for writing", 

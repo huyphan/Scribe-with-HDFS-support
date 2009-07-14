@@ -48,7 +48,8 @@ FB_ENABLE_DEFAULT_STATIC
 FB_ENABLE_FEATURE([FACEBOOK], [facebook])
 
 FB_ENABLE_FEATURE([USE_SCRIBE_HDFS_SYNC], [hdfs-sync])
-
+FB_WITH_PATH([jdk_home], [jdkpath], [/usr/local])
+FB_WITH_PATH([hadoop_home], [hadooppath], [/usr/local])
 
 # Personalized path generator Sets default paths. Provides --with-xx=DIR options.
 # FB_WITH_PATH([<var>_home], [<var>path], [<default location>]
