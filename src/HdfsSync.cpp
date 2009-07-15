@@ -186,12 +186,11 @@ bool HdfsSync::openInternal(bool incrementFilename, struct tm* current_time) {
     }
 
   } catch(std::exception const& e) {
-    LOG_OPER("ERRORR :(");
-    /*LOG_OPER("[%s] Failed to create/open file of type <%s> for writing",
+    LOG_OPER("[%s] Failed to create/open file of type <%s> for writing",
              categoryHandled.c_str(), fsType.c_str());
     LOG_OPER("Exception: %s", e.what());
     setStatus("file create/open error");
-    */ 
+     
     return false;
   }
   return success;
