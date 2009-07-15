@@ -24,6 +24,7 @@ class HdfsSync : public FileStore {
   unsigned long periodLength;
   std::string hdfsDir;
   std::string hdfs_base_filename;
+  std::string hdfs_base_directory;
   
   // Internal configuration
   std::string hdfsHost;
