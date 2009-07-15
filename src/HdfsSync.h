@@ -20,7 +20,7 @@ class HdfsSync : public FileStore {
  protected: 
  
   // Configuration
-  static time_t lastSyncTime;  
+  time_t lastSyncTime;  
   unsigned long periodLength;
   std::string hdfsDir;
   std::string hdfs_base_filename;

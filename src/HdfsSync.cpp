@@ -10,8 +10,6 @@ using namespace boost;
 
 const string meta_logfile_prefix = "scribe_meta<new_logfile>: ";
 
-time_t HdfsSync::lastSyncTime;
-
 HdfsSync::HdfsSync(const string& category, bool multi_category,
                      bool is_buffer_file)
   : FileStore(category,multi_category,is_buffer_file),
