@@ -45,7 +45,7 @@ endif
 
 if USE_SCRIBE_HDFS_SYNC
   HDFS_SOURCES = HdfsSync.cpp
-  HDFS_LIB = -ljvm -lhdfs -L$(jvmpath)/jre/lib/i386/server/ -L$(hadoop_home)/libhdfs
+  HDFS_LIB = -ljvm -lhdfs -L$(jvm_lib)/jre/lib/i386/server/ -L$(hadoop_home)/libhdfs
   HDFS_CPPFLAGS = -I$(hadoop_home)/src/c++/libhdfs/ -I$(jdk_home)/include -I$(jdk_home)/include/linux
 endif
 
