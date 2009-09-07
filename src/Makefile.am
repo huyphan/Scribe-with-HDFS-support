@@ -30,7 +30,9 @@ all:
 # smc_home
 # fb_home
 # fb303_home
+# hadoop_home
 #
+
 THRIFT = $(thrift_home)/bin/thrift
 
 # User defined conditionals and conditonal statements set up in configure.ac.
@@ -40,10 +42,13 @@ if FACEBOOK
   FB_SOURCES = gen-cpp/ServiceManager_types.cpp gen-cpp/ServiceManager.cpp
   FB_CPPFLAGS = -I$(fb_home)
 endif
+
 if USE_SCRIBE_HDFS_SYNC
   HDFS_SOURCES = HdfsSync.cpp
-  HDFS_LIB = -ljvm -lhdfs
+  HDFS_LIB = -ljvm -lhdfs -L$(jdk_home)/jre/lib/i386/server/ -L$(hadoop_home)/libhdfs
+  HDFS_CPPFLAGS = -I$(hadoop_home)/src/c++/libhdfs/ -I$(jdk_home)/include -I$(jdk_home)/include/linux
 endif
+
 if DEBUG
    DEBUG_CPPFLAGS = -DDEBUG_TIMING
 endif
@@ -52,8 +57,6 @@ endif
 # Set libraries external to this component.
 EXTERNAL_LIBS = -L$(thrift_home)/lib -L$(fb303_home)/lib -lfb303  -lthrift -lthriftnb
 EXTERNAL_LIBS += -levent -lpthread
-EXTERNAL_LIBS += -L$(hadoop_home)/lib -L$(jvm_lib) 
-EXTERNAL_LIBS += $(HDFS_LIB)
 
 # Section 2 ############################################################################
 # Set common flags recognized by automake.
@@ -67,8 +70,9 @@ AM_CPPFLAGS += -I$(fb303_home)/include/thrift
 AM_CPPFLAGS += -I$(fb303_home)/include/thrift/fb303
 AM_CPPFLAGS += $(BOOST_CPPFLAGS)
 AM_CPPFLAGS += $(FB_CPPFLAGS) $(DEBUG_CPPFLAGS)
-AM_CPPFLAGS += -I$(jdk_home)/include -I$(jdk_home)/include/linux
-AM_LDFLAGS = $(BOOST_LDFLAGS) $(BOOST_SYSTEM_LIB) $(BOOST_FILESYSTEM_LIB)
+AM_CPPFLAGS += $(HDFS_CPPFLAGS)
+
+AM_LDFLAGS = $(BOOST_LDFLAGS) $(BOOST_SYSTEM_LIB) $(BOOST_FILESYSTEM_LIB) $(HDFS_LIB)
 
 # Section 3 #############################################################################
 # GENERATE BUILD RULES
@@ -95,7 +99,7 @@ endif
 
 # Binaries -- multiple progs can be defined.
 bin_PROGRAMS = scribed
-scribed_SOURCES = store.cpp HdfsSync.cpp store_queue.cpp conf.cpp file.cpp conn_pool.cpp scribe_server.cpp $(FB_SOURCES)
+scribed_SOURCES = store.cpp $(HDFS_SOURCES) store_queue.cpp conf.cpp file.cpp conn_pool.cpp scribe_server.cpp $(FB_SOURCES)
 scribed_LDADD = $(EXTERNAL_LIBS) $(INTERNAL_LIBS)
 
 if SHARED

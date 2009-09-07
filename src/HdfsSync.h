@@ -37,8 +37,8 @@ class HdfsSync : public FileStore {
 class HdfsSync : public FileStore {
  public:
   HdfsSync(const std::string& category, bool multi_category,
-                     bool is_buffer_file) : FileInterface(category, false, false) {
-    LOG_OPER("[hdfs] ERROR: HDFS Sync is not supported.  file: %s", name.c_str());
+                     bool is_buffer_file) : FileStore(category, false, false) {
+    LOG_OPER("[hdfs] ERROR: HDFS Sync is not supported.");
     LOG_OPER("[hdfs] If you want HDFS Sync Support, please recompile scribe with HDFS Sync support");
   }
 };
