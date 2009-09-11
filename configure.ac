@@ -68,7 +68,7 @@ AX_BOOST_FILESYSTEM
 
 # Generates Makefile from Makefile.am. Modify when new subdirs are added.
 # Change Makefile.am also to add subdirectly.
-AC_CONFIG_FILES(Makefile src/Makefile lib/py/Makefile)
+AC_CONFIG_FILES(Makefile src/Makefile lib/py/Makefile wrapper/Makefile)
 
 ############################################################################
 # DO NOT TOUCH.

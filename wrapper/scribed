@@ -1,0 +1,104 @@
+#! /bin/sh
+#
+# /etc/init.d/scribed
+#
+# chkconfig: - 98 02
+# description: 
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+SCRIBED_BIN=__prefix__/bin/scribed
+
+init_path()
+{
+    export HADOOP_HOME=__HADOOP_HOME__
+
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib:/usr/local/lib:__JVMPATH__:$HADOOP_HOME/build/libhdfs:$HADOOP_HOME/libhdfs
+
+    HADOOP_CONF_DIR="${HADOOP_CONF_DIR:-$HADOOP_HOME/conf}"
+
+    CLASSPATH="${HADOOP_CONF_DIR}"
+    CLASSPATH=${CLASSPATH}:$JAVA_HOME/lib/tools.jar
+
+    if [ -d "$HADOOP_HOME/build/classes" ]; then
+      CLASSPATH=${CLASSPATH}:$HADOOP_HOME/build/classes
+    fi
+    if [ -d "$HADOOP_HOME/build/webapps" ]; then
+      CLASSPATH=${CLASSPATH}:$HADOOP_HOME/build
+    fi
+    if [ -d "$HADOOP_HOME/build/test/classes" ]; then
+      CLASSPATH=${CLASSPATH}:$HADOOP_HOME/build/test/classes
+    fi
+
+
+    IFS=
+
+    if [ -d "$HADOOP_HOME/webapps" ]; then
+      CLASSPATH=${CLASSPATH}:$HADOOP_HOME
+    fi
+    for f in $HADOOP_HOME/hadoop-*-core.jar; do
+      CLASSPATH=${CLASSPATH}:$f;
+    done
+
+    for f in $HADOOP_HOME/lib/*.jar; do
+      CLASSPATH=${CLASSPATH}:$f;
+    done
+
+    for f in $HADOOP_HOME/lib/jetty-ext/*.jar; do
+      CLASSPATH=${CLASSPATH}:$f;
+    done
+
+    for f in $HADOOP_HOME/hadoop-*-tools.jar; do
+      TOOL_PATH=${TOOL_PATH}:$f;
+    done
+    for f in $HADOOP_HOME/build/hadoop-*-tools.jar; do
+      TOOL_PATH=${TOOL_PATH}:$f;
+    done
+
+    if [ "$HADOOP_CLASSPATH" != "" ]; then
+      CLASSPATH=${CLASSPATH}:${HADOOP_CLASSPATH}
+    fi
+
+    if [ "$HADOOP_LOG_DIR" = "" ]; then
+      HADOOP_LOG_DIR="$HADOOP_HOME/logs"
+    fi
+    if [ "$HADOOP_LOGFILE" = "" ]; then
+      HADOOP_LOGFILE='hadoop.log'
+    fi
+
+    unset IFS
+
+}
+
+case "$1" in
+        start)
+                echo -n $"Starting scribed: "
+				init_path
+                daemon $SCRIBED_BIN 1> /dev/null 2> /dev/null &
+                touch /var/lock/subsys/scribed
+				echo
+        ;;
+        stop)
+                echo -n $"Shutting down scribed: "
+                killproc $SCRIBED_BIN 2> /dev/null
+                rm -f /var/lock/subsys/scribed
+				echo
+        ;;
+        status)
+                if pidofproc scribed > /dev/null ; then
+                        echo "scribed is running."
+                else
+                        status scribed
+                fi
+        ;;
+        restart | reload)
+                $0 stop
+                $0 start
+        ;;
+        *)
+                echo "Usage: scribed {start|stop|status|reload|restart}"
+                exit 1
+        ;;
+esac
+
