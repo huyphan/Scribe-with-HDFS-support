@@ -2,7 +2,7 @@
 
 @PRODUCT_MK@
 
-SUBDIRS = wrapper
+SUBDIRS = . src lib/py wrapper
 
 BUILT_SOURCES =
 
