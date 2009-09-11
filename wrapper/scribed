@@ -75,7 +75,7 @@ case "$1" in
         start)
                 echo -n $"Starting scribed: "
 				init_path
-                daemon $SCRIBED_BIN 1> /dev/null 2> /dev/null &
+                daemon $SCRIBED_BIN >> /var/log/scribed.log 2>> /var/log/scribed.log &
                 touch /var/lock/subsys/scribed
 				echo
         ;;
