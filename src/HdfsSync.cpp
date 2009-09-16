@@ -160,7 +160,6 @@ bool HdfsSync::openInternal(bool incrementFilename, struct tm* current_time) {
           else
           {
               string writePath = hdfsPath + "/" + categoryHandled.c_str() + "/" + hdfs_base_directory.c_str() + hdfs_base_filename.c_str() + baseFilename;              
-              hdfsFile dstFile = hdfsOpenFile(fs, writePath.c_str(), O_WRONLY, 0, 0, 0);
               if (NULL == dstFile)
               {
                   LOG_OPER("Cannot open file to write : %s",writePath.c_str());
@@ -169,16 +168,25 @@ bool HdfsSync::openInternal(bool incrementFilename, struct tm* current_time) {
               {
                   char buffer[1024];
                   ifstream file_in(fullFilename.c_str(), ios::in | ios::binary);
-                  while (!file_in.eof())
+                  if (file_in.eof())
                   {
-                    file_in.read(buffer, 1024);
-                    tSize num_written_bytes = hdfsWrite(fs, dstFile, (void*)buffer, file_in.gcount());      
+                      hdfsFile dstFile = hdfsOpenFile(fs, writePath.c_str(), O_WRONLY, 0, 0, 0);
+                      while (!file_in.eof())
+                      {
+                        file_in.read(buffer, 1024);
+                        tSize num_written_bytes = hdfsWrite(fs, dstFile, (void*)buffer, file_in.gcount());      
+                      }
+                      file_in.close();
+                      hdfsCloseFile(fs, dstFile);
+                      LOG_OPER("Copied to HDFS hdfs://%s:%d/%s",hdfsHost.c_str(),hdfsPort,writePath.c_str());
+                      deleteOldest(current_time);
+                      LOG_OPER("[%s] Removed local file <%s> - sync complete", categoryHandled.c_str(), file.c_str());
                   }
-                  file_in.close();
-                  hdfsCloseFile(fs, dstFile);
-                  LOG_OPER("Copied to HDFS hdfs://%s:%d/%s",hdfsHost.c_str(),hdfsPort,writePath.c_str());
-                  deleteOldest(current_time);
-                  LOG_OPER("[%s] Removing local file <%s> - sync complete", categoryHandled.c_str(), file.c_str());
+                  else
+                  {
+                      deleteOldest(current_time);
+                      LOG_OPER("[%s] Removed empty local file <%s> - sync complete", categoryHandled.c_str(), file.c_str());
+                  }
               }
           }
       }            
