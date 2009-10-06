@@ -168,7 +168,7 @@ bool HdfsSync::openInternal(bool incrementFilename, struct tm* current_time) {
               {
                   char buffer[1024];
                   ifstream file_in(fullFilename.c_str(), ios::in | ios::binary);
-                  if (file_in.eof())
+                  if (!file_in.eof())
                   {
                       hdfsFile dstFile = hdfsOpenFile(fs, writePath.c_str(), O_WRONLY, 0, 0, 0);
                       while (!file_in.eof())
@@ -188,6 +188,7 @@ bool HdfsSync::openInternal(bool incrementFilename, struct tm* current_time) {
                       LOG_OPER("[%s] Removed empty local file <%s> - sync complete", categoryHandled.c_str(), file.c_str());
                   }
               }
+              fs.close();
           }
       }            
 
