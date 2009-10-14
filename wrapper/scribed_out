@@ -12,9 +12,9 @@ SCRIBED_BIN=/usr/local/bin/scribed
 
 init_path()
 {
-    export HADOOP_HOME=/home/pdah/dev/hadoop-0.18.3
+    export HADOOP_HOME=/home/pdah/dev/hadoop-0.18.3/
 
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib:/usr/local/lib:/usr/java/jdk1.6.0_14/jre/lib/i386/server/:$HADOOP_HOME/build/libhdfs:$HADOOP_HOME/libhdfs
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib:/usr/local/lib:/usr/java/jdk1.6.0_16/jre/lib/i386/server/:$HADOOP_HOME/build/libhdfs:$HADOOP_HOME/libhdfs
 
     HADOOP_CONF_DIR="${HADOOP_CONF_DIR:-$HADOOP_HOME/conf}"
 
@@ -69,21 +69,22 @@ init_path()
 
     unset IFS
 
+    export CLASSPATH
 }
 
 case "$1" in
         start)
                 echo -n $"Starting scribed: "
-				init_path
+                init_path
                 daemon $SCRIBED_BIN >> /var/log/scribed.log 2>> /var/log/scribed.log &
                 touch /var/lock/subsys/scribed
-				echo
+                echo
         ;;
         stop)
                 echo -n $"Shutting down scribed: "
                 killproc $SCRIBED_BIN 2> /dev/null
                 rm -f /var/lock/subsys/scribed
-				echo
+                echo
         ;;
         status)
                 if pidofproc scribed > /dev/null ; then
