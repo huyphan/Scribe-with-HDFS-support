@@ -5,9 +5,10 @@ class HdfsSync : public FileStore {
   HdfsSync(const std::string& category, bool multi_category, bool is_buffer_file);
   void configure(pStoreConf configuration);
   bool openInternal(bool incrementFilename, struct tm* current_time);
-  void periodicCheck();
-  
+  void periodicCheck();    
+ 
   boost::shared_ptr<Store> copy(const std::string &category);
+  void copyToHDFS();
   /*
   bool handleMessages(boost::shared_ptr<logentry_vector_t> messages);
   bool isOpen();
@@ -30,6 +31,8 @@ class HdfsSync : public FileStore {
   std::string hdfsHost;
   unsigned hdfsPort;
   std::string hdfsPath;
+
+  std::vector<std::string> filesToCopy;
 };
 
 #else

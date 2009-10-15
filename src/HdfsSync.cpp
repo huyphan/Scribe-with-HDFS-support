@@ -65,16 +65,68 @@ void HdfsSync::configure(pStoreConf configuration) {
   free(hostport);  
 }
 
+void HdfsSync::copyToHDFS()
+{
+  vector<std::string>::iterator it = filesToCopy.begin();
+  while (it!=filesToCopy.end())
+  {
+    bool success = false;
+    std::string filename = *it;
+	std::string baseFilename = filename;
+
+    int found = filename.find_last_of("/");
+
+    if (found != string::npos)
+    {
+      baseFilename = filename.substr(found+1);
+    }    
+
+    hdfsFS fs = hdfsConnect(hdfsHost.c_str(), hdfsPort);
+    if (NULL == fs ) 
+    {
+      LOG_OPER("Cannot connect to hdfs://%s:%d",hdfsHost.c_str(), hdfsPort);
+    }
+    else
+    {
+      string writePath = hdfsPath + "/" + categoryHandled.c_str() + "/" + hdfs_base_directory.c_str() + hdfs_base_filename.c_str() + baseFilename;              
+      ifstream file_in(filename.c_str(), ios::in | ios::binary);
+      hdfsFile dstFile = hdfsOpenFile(fs, writePath.c_str(), O_WRONLY, 0, 0, 0);
+	  if (NULL == dstFile)
+      {
+          LOG_OPER("Cannot open file to write : %s",writePath.c_str());
+      }
+      else
+      {
+        char buffer[1024];
+        while (!file_in.eof())
+        {
+          file_in.read(buffer, 1024);
+          tSize num_written_bytes = hdfsWrite(fs, dstFile, (void*)buffer, file_in.gcount());      
+        }
+        file_in.close();
+        hdfsCloseFile(fs, dstFile);
+        
+        LOG_OPER("Copied to HDFS hdfs://%s:%d/%s",hdfsHost.c_str(),hdfsPort,writePath.c_str()); 
+        success = true;
+        
+      }
+      hdfsDisconnect(fs);
+    } // end else
+    if (success)
+      filesToCopy.erase(it);
+    else
+      it++;
+  } // end while
+}
 
 bool HdfsSync::openInternal(bool incrementFilename, struct tm* current_time) {
   bool success = false;
-    LOG_OPER("OPEN INTERNAL");
+  LOG_OPER("OPEN INTERNAL");
   if (!current_time) {
     time_t rawtime;
     time(&rawtime);
     current_time = localtime(&rawtime);
   }
-
   try {
     int suffix = findNewestFile(makeBaseFilename(current_time));
 
@@ -99,6 +151,7 @@ bool HdfsSync::openInternal(bool incrementFilename, struct tm* current_time) {
     string fullFilename;
     string baseFilename;
       
+    // Save old file
     if (writeFile) {
       if (writeMeta) {
         writeFile->write(meta_logfile_prefix + file);
@@ -118,7 +171,9 @@ bool HdfsSync::openInternal(bool incrementFilename, struct tm* current_time) {
       writeFile->close();
     }
 
+    copyToHDFS();
     
+    // Open new file
     writeFile = FileInterface::createFileInterface(fsType, file, isBufferFile);
     if (!writeFile) {
       LOG_OPER("[%s] Failed to create file <%s> of type <%s> for writing", 
@@ -127,72 +182,31 @@ bool HdfsSync::openInternal(bool incrementFilename, struct tm* current_time) {
       return false;
     }
     
-    success = writeFile->openWrite();
+    success = writeFile->openWrite();    
 
     if (!success) {
       LOG_OPER("[%s] Failed to open file <%s> for writing", categoryHandled.c_str(), file.c_str());
       setStatus("File open error");
     } else {
 
-      /* just make a best effort here, and don't error if it fails */
-      if (createSymlink && !isBufferFile) {
-        string symlinkName = makeFullSymlink();
-        unlink(symlinkName.c_str());
-        symlink(file.c_str(), symlinkName.c_str());
-      }
-      // else it confuses the filename code on reads
+    /* just make a best effort here, and don't error if it fails */
+    if (createSymlink && !isBufferFile) {
+      string symlinkName = makeFullSymlink();
+      unlink(symlinkName.c_str());
+      symlink(file.c_str(), symlinkName.c_str());
+    }
+    // else it confuses the filename code on reads
 
-      LOG_OPER("[%s] Opened file <%s> for writing", categoryHandled.c_str(), file.c_str());
+	// Open successful, add file to queue
+    filesToCopy.push_back(file);
 
-      currentSize = writeFile->fileSize();
-      currentFilename = file;
-      eventsWritten = 0;
-      setStatus("");          
-      
-      // copy last file to hdfs server 
-           if (sync)
-      {        
-          hdfsFS fs = hdfsConnect(hdfsHost.c_str(), hdfsPort);
-          if (NULL == fs ) 
-          {
-              LOG_OPER("Cannot connect to hdfs://%s:%d",hdfsHost.c_str(), hdfsPort);
-          }
-          else
-          {
-              string writePath = hdfsPath + "/" + categoryHandled.c_str() + "/" + hdfs_base_directory.c_str() + hdfs_base_filename.c_str() + baseFilename;              
-              ifstream file_in(fullFilename.c_str(), ios::in | ios::binary);
-              if (!file_in.eof())
-              {
-                  hdfsFile dstFile = hdfsOpenFile(fs, writePath.c_str(), O_WRONLY, 0, 0, 0);
-                  if (NULL == dstFile)
-                  {
-                      LOG_OPER("Cannot open file to write : %s",writePath.c_str());
-                  }
-                  else
-                  {
-                      char buffer[1024];
-                      while (!file_in.eof())
-                      {
-                        file_in.read(buffer, 1024);
-                        tSize num_written_bytes = hdfsWrite(fs, dstFile, (void*)buffer, file_in.gcount());      
-                      }
+    LOG_OPER("[%s] Opened file <%s> for writing", categoryHandled.c_str(), file.c_str());
 
-                      file_in.close();
-                      hdfsCloseFile(fs, dstFile);
-                      LOG_OPER("Copied to HDFS hdfs://%s:%d/%s",hdfsHost.c_str(),hdfsPort,writePath.c_str());
-                      deleteOldest(current_time);
-                      LOG_OPER("[%s] Removed local file <%s> - sync complete", categoryHandled.c_str(), file.c_str());
-                  }        
-              }
-              else
-              {
-                  deleteOldest(current_time);
-                  LOG_OPER("[%s] Removed empty local file <%s> - sync complete", categoryHandled.c_str(), file.c_str());
-              }
-              
-              hdfsDisconnect(fs);
-          }
-      }            
+
+    currentSize = writeFile->fileSize();
+    currentFilename = file;
+    eventsWritten = 0;
+    setStatus("");                
 
     }
   } catch(std::exception const& e) {
@@ -241,4 +255,3 @@ boost::shared_ptr<Store> HdfsSync::copy(const std::string &category) {
 }
 
 #endif // USE_SCRIBE_HDFS_SYNC
-
